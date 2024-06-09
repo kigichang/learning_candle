@@ -1,3 +1,3 @@
 [workspace]
 resolver = "2"
-members = [ "candle-roberta", "learning_deep_learning/ch01", "learning_deep_learning/ch01_tensor", "pytorch_nlp/ch04","test_hug_api", "test_layer_norm", "test_tensor"]
+members = [ "candle-roberta", "learning_deep_learning/ch01", "learning_deep_learning/ch01_tensor", "mnist", "pytorch_nlp/ch04", "test_candle_core_utils","test_hug_api", "test_layer_norm", "test_tensor"]

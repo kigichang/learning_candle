@@ -343,12 +343,6 @@ mod tests_4_1 {
         let t1 = t.i((.., 1)).unwrap();
         println!("{:?}", t1.to_vec1::<i64>().unwrap());
     }
-}
-
-#[cfg(test)]
-mod tests_4_2 {
-
-    use candle_core::{DType, Device, Tensor};
 
     #[test]
     fn test_add() {
@@ -393,5 +387,122 @@ mod tests_4_2 {
         // let t1 = Tensor::from_iter(1..=3_i64, &Device::Cpu).unwrap();
         // let t2 = Tensor::from_iter(1..=9_i64, &Device::Cpu).unwrap();
         // let t3 = t1.broadcast_add(&t2).unwrap(); // error
+    }
+}
+
+#[cfg(test)]
+mod tests_4_4 {
+
+    use candle_core::{DType, Device, Tensor};
+    use candle_nn::loss;
+
+    #[test]
+    fn test_mse_loss() {
+        let w = Tensor::randn(0.0_f32, 1.0_f32, 1, &Device::Cpu).unwrap();
+        println!("w: {:?}", w.to_vec1::<f32>().unwrap());
+        let b = Tensor::zeros(1, DType::F32, &Device::Cpu).unwrap();
+        println!("b: {:?}", b.to_vec1::<f32>().unwrap());
+
+        let x = Tensor::rand(0.0_f32, 10.0_f32, (10, 1), &Device::Cpu).unwrap();
+        println!("x: {:?}", x.to_vec2::<f32>().unwrap());
+
+        let y = Tensor::randn(0.0_f32, 1.0_f32, (10, 1), &Device::Cpu).unwrap();
+        let y = y
+            .broadcast_add(&Tensor::full(5.0_f32, (10, 1), &Device::Cpu).unwrap())
+            .unwrap()
+            .add(
+                &x.broadcast_mul(&Tensor::new(&[2.0_f32], &Device::Cpu).unwrap())
+                    .unwrap(),
+            )
+            .unwrap();
+        println!("y: {:?}", y.to_vec2::<f32>().unwrap());
+
+        let y_pred = x.broadcast_div(&w).unwrap().broadcast_add(&b).unwrap();
+        println!("y_pred: {:?}", y_pred.to_vec2::<f32>().unwrap());
+
+        let loss = (&y_pred - &y).unwrap().sqr().unwrap().mean_all().unwrap();
+        println!("loss: {:?}", loss.to_scalar::<f32>().unwrap());
+
+        let loss = loss::mse(&y_pred, &y).unwrap();
+        println!("mse: {:?}", loss.to_scalar::<f32>().unwrap());
+    }
+}
+
+#[cfg(test)]
+mod test_4_7 {
+
+    use candle_core::{DType, Device, IndexOp, Tensor, Var};
+    use candle_nn::{Activation, Module};
+
+    #[test]
+    fn logistic_regression() {
+        let device = Device::cuda_if_available(0).unwrap();
+        let data_size = 100;
+        let xy0 = Tensor::randn(2.0_f32, 1.5_f32, (data_size, 2), &device).unwrap();
+        let xy1 = Tensor::randn(-2.0_f32, 1.5_f32, (data_size, 2), &device).unwrap();
+        let c0 = Tensor::zeros(data_size, DType::F32, &device).unwrap();
+        let c1 = Tensor::ones(data_size, DType::F32, &device).unwrap();
+        println!("xy0: {:?}", xy0.to_vec2::<f32>().unwrap());
+        println!("xy1: {:?}", xy1.to_vec2::<f32>().unwrap());
+        println!("c0: {:?}", c0.to_vec1::<f32>().unwrap());
+        println!("c1: {:?}", c1.to_vec1::<f32>().unwrap());
+
+        let xy = Tensor::cat(&[xy0, xy1], 0).unwrap();
+        println!("xy: {:?}", xy.to_vec2::<f32>().unwrap());
+        let x = xy.i((.., 0)).unwrap();
+        println!("x: {:?}", x.to_vec1::<f32>().unwrap());
+        let y = xy.i((.., 1)).unwrap();
+        println!("y: {:?}", y.to_vec1::<f32>().unwrap());
+        let c = Tensor::cat(&[c0, c1], 0).unwrap();
+        println!("c: {:?}", c.to_vec1::<f32>().unwrap());
+
+        // 如果要使用 pytorch 的 requires_grad=True 功能的話，需要使用 Var
+        let w = Var::ones(1, DType::F32, &device).unwrap();
+
+        // 如果要使用 pytorch 的 requires_grad=True 功能的話，需要使用 Var
+        let b = Var::zeros(1, DType::F32, &device).unwrap();
+
+        println!("w: {:?}", w.to_vec1::<f32>().unwrap());
+        println!("b: {:?}", b.to_vec1::<f32>().unwrap());
+
+        let lr = Tensor::new(&[0.02_f32], &device).unwrap();
+        for i in 1..=1000 {
+            let loss = x
+                .broadcast_mul(&w)
+                .unwrap()
+                .broadcast_add(&b)
+                .unwrap()
+                .broadcast_sub(&y)
+                .unwrap();
+
+            let loss = Activation::Sigmoid.forward(&loss).unwrap();
+            let loss = loss
+                .broadcast_sub(&c)
+                .unwrap()
+                .sqr()
+                .unwrap()
+                .mean_all()
+                .unwrap();
+            let grad = loss.backward().unwrap();
+            let w_grad = grad.get(&w).unwrap();
+            let b_grad = grad.get(&b).unwrap();
+            println!("{i}: loss: {:?}", loss.to_scalar::<f32>().unwrap());
+            println!("{i}: w_grad: {:?}", w_grad.to_vec1::<f32>().unwrap());
+            println!("{i}: b_grad: {:?}", b_grad.to_vec1::<f32>().unwrap());
+
+            {
+                let w_lr = w_grad.broadcast_mul(&lr).unwrap();
+                let w_lr = w.broadcast_sub(&w_lr).unwrap();
+                w.set(&w_lr).unwrap();
+
+                let b_lr = b_grad.broadcast_mul(&lr).unwrap();
+                let b_lr = b.broadcast_sub(&b_lr).unwrap();
+                b.set(&b_lr).unwrap();
+            }
+
+            if loss.to_scalar::<f32>().unwrap() < 0.03 {
+                break;
+            }
+        }
     }
 }
