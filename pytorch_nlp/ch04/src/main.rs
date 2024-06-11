@@ -2,17 +2,18 @@ fn main() {
     println!("Hello, world!");
 }
 
+use tracing_chrome::ChromeLayerBuilder;
+use tracing_subscriber::prelude::*;
+
+pub fn init_tracing() {
+    let (chrome_layer, _) = ChromeLayerBuilder::new().build();
+    tracing_subscriber::registry().with(chrome_layer).init();
+}
+
 #[cfg(test)]
 mod tests_4_1 {
-
+    use super::*;
     use candle_core::{DType, Device, IndexOp, Tensor, D};
-    use tracing_chrome::ChromeLayerBuilder;
-    use tracing_subscriber::prelude::*;
-
-    fn init_tracing() {
-        let (chrome_layer, _) = ChromeLayerBuilder::new().build();
-        tracing_subscriber::registry().with(chrome_layer).init();
-    }
 
     #[test]
     fn test_tensor_basic() {
@@ -430,9 +431,8 @@ mod tests_4_4 {
 
 #[cfg(test)]
 mod test_4_7 {
-
     use candle_core::{DType, Device, IndexOp, Tensor, Var};
-    use candle_nn::{Activation, Module};
+    use candle_nn::{Activation, Module, VarBuilder, VarMap};
 
     #[test]
     fn logistic_regression() {
