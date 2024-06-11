@@ -4,8 +4,8 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-anyhow = "1.0.86"
-candle-core = { git = "https://github.com/huggingface/candle.git", version = "0.6.0" }
-candle-datasets = { git = "https://github.com/huggingface/candle.git", version = "0.6.0" }
-candle-nn = { git = "https://github.com/huggingface/candle.git", version = "0.6.0" }
-clap = { version = "4.2.4", features = ["derive"] }
+anyhow = { workspace = true }
+candle-core = { workspace = true }
+candle-datasets = { workspace = true }
+candle-nn = { workspace = true }
+clap = { workspace = true }

@@ -432,7 +432,7 @@ mod tests_4_4 {
 #[cfg(test)]
 mod test_4_7 {
     use candle_core::{DType, Device, IndexOp, Tensor, Var};
-    use candle_nn::{Activation, Module, VarBuilder, VarMap};
+    use candle_nn::{Activation, Module};
 
     #[test]
     fn logistic_regression() {
