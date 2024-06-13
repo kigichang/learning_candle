@@ -1,5 +1,5 @@
 use anyhow::Result;
-use candle_core::{DType, Tensor, D};
+use candle_core::{DType, Device, Tensor, D};
 use candle_nn::{loss, ops, Linear, Module, Optimizer, VarBuilder, VarMap};
 use clap::Parser;
 
@@ -56,7 +56,16 @@ fn linear_z(in_dim: usize, out_dim: usize, vb: &VarBuilder) -> Result<Linear> {
 }
 
 fn training_loop(m: candle_datasets::vision::Dataset, args: &TrainingArgs) -> Result<()> {
-    let device = candle_core::Device::cuda_if_available(0)?;
+    let device = if candle_core::utils::cuda_is_available() {
+        // 有沒有支援 CUDA
+        Device::new_cuda(0)?
+    } else if candle_core::utils::metal_is_available() {
+        // 有沒有支援 Metal (MacOS GPU)
+        Device::new_metal(0)?
+    } else {
+        Device::Cpu
+    };
+    println!("device:{:?}", device);
 
     let train_labels = m.train_labels.to_dtype(DType::U32)?.to_device(&device)?;
     let train_images = m.train_images.to_device(&device)?;

@@ -4,9 +4,9 @@ members = [ "candle-roberta", "learning_deep_learning/ch01", "learning_deep_lear
 
 [workspace.dependencies]
 anyhow = "1.0.86"
-candle-core = { git = "https://github.com/huggingface/candle.git", version = "0.6.0" }
+candle-core = { git = "https://github.com/huggingface/candle.git", version = "0.6.0", features = ["metal", "accelerate"] }
 candle-datasets = { git = "https://github.com/huggingface/candle.git", version = "0.6.0" }
-candle-nn = { git = "https://github.com/huggingface/candle.git", version = "0.6.0" }
+candle-nn = { git = "https://github.com/huggingface/candle.git", version = "0.6.0", features = ["metal", "accelerate"] }
 candle-metal-kernels = { git = "https://github.com/huggingface/candle.git", version = "0.6.0" }
 clap = { version = "4.2.4", features = ["derive"] }
 rand = "0.8.5"
@@ -16,4 +16,3 @@ serde_json = "1.0.117"
 tokenizers = "0.19.1"
 tracing-chrome = "0.7.2"
 tracing-subscriber = "0.3.18"
-accelerate-src = { version = "0.3.2" }
