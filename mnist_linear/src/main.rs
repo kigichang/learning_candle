@@ -78,6 +78,7 @@ fn training_loop(m: candle_datasets::vision::Dataset, args: &TrainingArgs) -> Re
     if let Some(load) = &args.load {
         println!("loading model from {load}...");
         varmap.load(load)?;
+        println!("loaded: {:?}", varmap.all_vars());
     }
 
     let mut sgd = candle_nn::SGD::new(varmap.all_vars(), args.learning_rate)?;
@@ -86,6 +87,9 @@ fn training_loop(m: candle_datasets::vision::Dataset, args: &TrainingArgs) -> Re
 
     for epoch in 1..=args.epochs {
         let logits = model.forward(&train_images)?;
+        let first = logits.narrow(0, 0, 1)?;
+        println!("logits[0]: {:?}", first.to_vec2::<f32>()?);
+        println!("argmax[0]: {:?}", first.argmax(D::Minus1)?);
         let log_sum = ops::log_softmax(&logits, D::Minus1)?;
         println!("log_sum.shapre: {:?}", log_sum.shape());
         println!(
