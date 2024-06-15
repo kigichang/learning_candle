@@ -37,7 +37,7 @@ struct Mlp {
 }
 
 impl Mlp {
-    fn new(vb: &VarBuilder) -> Result<Self> {
+    fn new(vb: VarBuilder) -> Result<Self> {
         let ln1 = candle_nn::linear(IMAGE_DIM, 100, vb.pp("ln1"))?;
         let ln2 = candle_nn::linear(100, LABLES, vb.pp("ln2"))?;
 
@@ -80,7 +80,7 @@ fn training_loop(m: candle_datasets::vision::Dataset, args: TrainingArgs) -> Res
     let mut varmap = VarMap::new();
     let vb = VarBuilder::from_varmap(&varmap, DType::F32, &device);
 
-    let model = Mlp::new(&vb)?;
+    let model = Mlp::new(vb.clone())?;
 
     if let Some(load) = &args.load {
         println!("loading weights from {load}");

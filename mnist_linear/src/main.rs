@@ -1,6 +1,6 @@
 use anyhow::Result;
 use candle_core::{DType, Device, Tensor, D};
-use candle_nn::{loss, ops, Linear, Module, Optimizer, VarBuilder, VarMap};
+use candle_nn::{encoding, loss, ops, Linear, Module, Optimizer, VarBuilder, VarMap};
 use clap::Parser;
 
 const IMAGE_DIM: usize = 28 * 28;
@@ -37,7 +37,7 @@ struct LinearModel {
 }
 
 impl LinearModel {
-    fn new(vb: &VarBuilder) -> Result<Self> {
+    fn new(vb: VarBuilder) -> Result<Self> {
         let linear = linear_z(IMAGE_DIM, LABLES, vb)?;
         Ok(Self { linear })
     }
@@ -49,7 +49,7 @@ impl Module for LinearModel {
     }
 }
 
-fn linear_z(in_dim: usize, out_dim: usize, vb: &VarBuilder) -> Result<Linear> {
+fn linear_z(in_dim: usize, out_dim: usize, vb: VarBuilder) -> Result<Linear> {
     let w = vb.get_with_hints((out_dim, in_dim), "weight", candle_nn::init::ZERO)?;
     let b = vb.get_with_hints(out_dim, "bias", candle_nn::init::ZERO)?;
     Ok(Linear::new(w, Some(b)))
@@ -73,7 +73,7 @@ fn training_loop(m: candle_datasets::vision::Dataset, args: &TrainingArgs) -> Re
     let mut varmap = VarMap::new();
     let vb = VarBuilder::from_varmap(&varmap, DType::F32, &device);
 
-    let model = LinearModel::new(&vb)?;
+    let model = LinearModel::new(vb.clone())?;
 
     if let Some(load) = &args.load {
         println!("loading model from {load}...");
@@ -87,6 +87,11 @@ fn training_loop(m: candle_datasets::vision::Dataset, args: &TrainingArgs) -> Re
     for epoch in 1..=args.epochs {
         let logits = model.forward(&train_images)?;
         let log_sum = ops::log_softmax(&logits, D::Minus1)?;
+        println!("log_sum.shapre: {:?}", log_sum.shape());
+        println!(
+            "log_sum[0]: {:?}",
+            log_sum.narrow(0, 0, 1)?.to_vec2::<f32>()?
+        );
         let loss = loss::nll(&log_sum, &train_labels)?;
         sgd.backward_step(&loss)?;
 
@@ -125,6 +130,20 @@ fn main() -> Result<()> {
 
     println!("train-images: {:?}", m.train_images.shape());
     println!("train-labels: {:?}", m.train_labels.shape());
+    println!(
+        "train-labels[0]: {:?}",
+        m.train_labels.narrow(0, 0, 1)?.to_vec1::<u8>()?
+    ); // 測試取 matrix 中某一個 vector
+
+    println!("train-labels.unsqueeze: {:?}", m.train_labels.unsqueeze(1)?);
+
+    let one_hot = encoding::one_hot::<u8>(m.train_labels.clone(), 10, 1, 0)?;
+    println!("one_hot: {:?}", one_hot);
+    println!(
+        "one_hot[0]: {:?}",
+        one_hot.narrow(0, 0, 1)?.to_vec2::<u8>()?
+    ); // one_hot: https://zh.wikipedia.org/zh-tw/%E7%8B%AC%E7%83%AD
+
     println!("test-images: {:?}", m.test_images.shape());
     println!("test-labels: {:?}", m.test_labels.shape());
 

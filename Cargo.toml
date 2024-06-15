@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = [ "candle-roberta", "learning_deep_learning/ch01", "learning_deep_learning/ch01_tensor", "mnist", "mnist_linear", "pytorch_nlp/ch04", "test_candle_core_utils","test_hug_api", "test_layer_norm", "test_tensor"]
+members = [ "candle-roberta", "learning_deep_learning/ch01", "learning_deep_learning/ch01_tensor", "mnist", "mnist_linear", "mnist_mlp", "pytorch_nlp/ch04", "test_candle_core_utils","test_hug_api", "test_layer_norm", "test_tensor"]
 
 [workspace.dependencies]
 anyhow = "1.0.86"
