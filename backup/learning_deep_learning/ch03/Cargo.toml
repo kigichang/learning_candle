@@ -1,0 +1,12 @@
+[package]
+name = "ch03"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow = { workspace = true }
+candle-core = { workspace = true }
+candle-nn = { workspace = true }
+candle-datasets = { workspace = true }
+rand = { workspace = true }
+clap = { workspace = true }
