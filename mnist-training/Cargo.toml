@@ -1,0 +1,14 @@
+[package]
+name = "mnist-training"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow = { workspace = true }
+candle-core = { workspace = true }
+candle-datasets = { workspace = true }
+candle-nn = { workspace = true }
+candle-transformers = { workspace = true }
+candle-metal-kernels = { workspace = true }
+clap = { workspace = true }
+rand = { workspace = true }

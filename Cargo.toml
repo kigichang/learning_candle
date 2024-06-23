@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-
+members = ["mnist-training"]
 
 [workspace.dependencies]
 anyhow = "1.0.86"

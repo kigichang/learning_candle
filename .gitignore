@@ -21,3 +21,5 @@ Cargo.lock
 *.json
 
 *.bin
+
+*.safetensors
